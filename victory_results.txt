@@ -1,0 +1,4 @@
+2 <- possible outputs - increase this number when more are added!
+
+<WINNER> defeats <LOSER>
+<LOSER> loses to <WINNER>
