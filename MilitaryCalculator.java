@@ -19,7 +19,7 @@ import javax.swing.JTextField;
 public class MilitaryCalculator extends JFrame implements ActionListener {
 
 	ResultHelper resultHelper;
-	private static final String VICTORY_RESULT_PATH = "src/com/empire/victory_results.txt";
+	private static final String VICTORY_RESULT_PATH = "src/com/empire/victory_results.txt"; //Remember to delete "src/" before exporting!
 	private static final String TIE_RESULT_PATH = "src/com/empire/tie_results.txt";
 	private static final String WINNER_TAG = "<WINNER>";
 	private static final String LOSER_TAG = "<LOSER>";
@@ -47,7 +47,7 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 	int difference = 0;
 
 	public MilitaryCalculator() {
-		super("EMPIRE! Military Outcome Calculator");
+		super("EMPIRE! 4 Military Calculator");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		resultHelper = new ResultHelper(VICTORY_RESULT_PATH, TIE_RESULT_PATH);
 
@@ -165,7 +165,13 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 		}
 	}
 
-	// Returns 0 for tie, 1 for side A victory, 2 for side B victory
+	/** 
+	 * Pulls information from the text input fields and rolls dice. Also prints winning side and difference between rolls to output.
+	 * <p>
+	 * 
+	 * @param	random	Random object used for dice.
+	 * @return	Returns 0 for tie, 1 for side A victory, 2 for side B victory
+	 */
 	private int generateResult(Random random) {
 		// Names
 		sideAName = sideA_Name.getText();
@@ -217,8 +223,8 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 		}
 
 		else {
-			out = out.concat("Tie");
 			difference = 0;
+			out = out.concat("Tie");
 		}
 
 		outcome.setText(out);
@@ -227,17 +233,25 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 		return result;
 	}
 
-	// WINNER_TAG represents the winner if not a tie, or side A if tied;
-	// LOSER_TAG represents the loser if not a tie, or side B if tied
+	/** 
+	 * Sets the winner and loser of the battle, then chooses a description using resultHelper.
+	 * <p>
+	 * WINNER_TAG represents the winner if not a tie, or side A if tied.
+	 * LOSER_TAG represents the loser if not a tie, or side B if tied.
+	 * 
+	 * @param	result	The result in integer form returned by generateResult().
+	 * @param	random	Random object passed to resultHelper.getRandomResult().
+	 * @return	void
+	 */
 	private void generateDescription(int result, Random random) {
 
 		String out, winner, loser;
 		if (result == 0) { // Tie
-			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + resultHelper.getRandomResult(random, true, difference);
+			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + resultHelper.getRandomDescription(random, true, difference);
 			winner = sideAName;
 			loser = sideBName;
 		} else {
-			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + resultHelper.getRandomResult(random, false, difference);
+			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + resultHelper.getRandomDescription(random, false, difference);
 			if (result == 1) { // Side A win
 				winner = sideAName;
 				loser = sideBName;
@@ -249,7 +263,7 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 
 		out = out.replace(WINNER_TAG, winner).replace(LOSER_TAG, loser);
 
-		System.out.println(out);
+		//System.out.println(out);
 		outcome.setText(out);
 		repaint();
 	}
