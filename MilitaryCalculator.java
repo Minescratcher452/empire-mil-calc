@@ -1,4 +1,4 @@
-package com.empire;
+package com.empire.fileless;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -18,9 +18,8 @@ import javax.swing.JTextField;
 @SuppressWarnings("serial")
 public class MilitaryCalculator extends JFrame implements ActionListener {
 
-	ResultHelper resultHelper;
-	private static final String VICTORY_RESULT_PATH = "src/com/empire/victory_results.txt";
-	private static final String TIE_RESULT_PATH = "src/com/empire/tie_results.txt";
+	private static final String[] VICTORY_RESULTS = {"<WINNER> defeats <LOSER>", "<LOSER> loses to <WINNER>"};
+	private static final String[] TIE_RESULTS = {"<WINNER> ties <LOSER>", "<LOSER> ties <WINNER>"};
 	private static final String WINNER_TAG = "<WINNER>";
 	private static final String LOSER_TAG = "<LOSER>";
 
@@ -49,7 +48,6 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 	public MilitaryCalculator() {
 		super("EMPIRE! Military Outcome Calculator");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		resultHelper = new ResultHelper(VICTORY_RESULT_PATH, TIE_RESULT_PATH);
 
 		// Panels
 		aPanel = new JPanel();
@@ -233,11 +231,11 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 
 		String out, winner, loser;
 		if (result == 0) { // Tie
-			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + resultHelper.getRandomResult(random, true, difference);
+			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + TIE_RESULTS[random.nextInt(TIE_RESULTS.length)];
 			winner = sideAName;
 			loser = sideBName;
 		} else {
-			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + resultHelper.getRandomResult(random, false, difference);
+			out = outcome.getText() + "\n\n*\t*\t*\t\n\n" + VICTORY_RESULTS[random.nextInt(VICTORY_RESULTS.length)];
 			if (result == 1) { // Side A win
 				winner = sideAName;
 				loser = sideBName;
