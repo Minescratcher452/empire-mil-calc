@@ -1,0 +1,4 @@
+2 <- possible outputs - increase this number when more are added!
+
+<WINNER> ties <LOSER>
+<LOSER> ties <WINNER>
