@@ -19,8 +19,8 @@ import javax.swing.JTextField;
 public class MilitaryCalculator extends JFrame implements ActionListener {
 
 	ResultHelper resultHelper;
-	private static final String VICTORY_RESULT_PATH = "src/com/empire/victory_results.txt"; //Remember to delete "src/" before exporting!
-	private static final String TIE_RESULT_PATH = "src/com/empire/tie_results.txt";
+	private static final String VICTORY_RESULT_PATH = "victory_results.txt";
+	private static final String TIE_RESULT_PATH = "tie_results.txt";
 	private static final String WINNER_TAG = "<WINNER>";
 	private static final String LOSER_TAG = "<LOSER>";
 
