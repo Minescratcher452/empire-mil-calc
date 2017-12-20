@@ -19,8 +19,8 @@ import javax.swing.JTextField;
 public class MilitaryCalculator extends JFrame implements ActionListener {
 
 	ResultHelper resultHelper;
-	private static final String VICTORY_RESULT_PATH = "src/com/empire/victory_results.txt"; // Remember to delete "src/" before exporting!
-	private static final String TIE_RESULT_PATH = "src/com/empire/tie_results.txt";
+	private static final String VICTORY_RESULT_PATH = "victory_results.txt";
+	private static final String TIE_RESULT_PATH = "tie_results.txt";
 	private static final String WINNER_TAG = "<WINNER>";
 	private static final String LOSER_TAG = "<LOSER>";
 
@@ -47,7 +47,7 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 	int difference = 0;
 
 	public MilitaryCalculator() {
-		super("EMPIRE! 4 Military Calculator");
+		super("EMPIRE! 4 Military Calculator by Minescratcher");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		resultHelper = new ResultHelper(VICTORY_RESULT_PATH, TIE_RESULT_PATH);
 
@@ -169,10 +169,13 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 	 * Pulls information from the text input fields and rolls dice. Also prints
 	 * winning side and difference between rolls to output.
 	 * <p>
+	 * DO NOT use return statements! Add outcome cases at line 246 following the
+	 * pattern of the others.
 	 * 
 	 * @param random
 	 *            Random object used for dice.
-	 * @return Returns 0 for tie, 1 for side A victory, 2 for side B victory
+	 * @return Returns 0 for tie, 1 for side A victory, 2 for side B victory, -1 for
+	 *         side A overrun victory, -2 for side B overrun victory
 	 */
 	private int generateResult(Random random) {
 		// Names
@@ -192,41 +195,61 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 		sideBBonuses = Integer.parseInt(sideB_Bonuses.getText());
 
 		// Generate
-		int sideARoll, sideBRoll;
+		int sideARoll, sideBRoll, sideADie, sideBDie;
 		if (!sideA_spec.isSelected()) {
-			sideARoll = (random.nextInt(10) + 1) + (random.nextInt(10) + 1);
+			sideADie = 10;
 		} else {
-			sideARoll = (random.nextInt(12) + 1) + (random.nextInt(12) + 1);
+			sideADie = 12;
 		}
 
 		if (!sideB_spec.isSelected()) {
-			sideBRoll = (random.nextInt(10) + 1) + (random.nextInt(10) + 1);
+			sideBDie = 10;
 		} else {
-			sideBRoll = (random.nextInt(12) + 1) + (random.nextInt(12) + 1);
+			sideBDie = 12;
 		}
 
-		sideARoll = sideARoll + sideAMil + sideATroops + sideABonuses;
-		sideBRoll = sideBRoll + sideBMil + sideBTroops + sideBBonuses;
+		sideARoll = (random.nextInt(sideADie) + 1) + (random.nextInt(sideADie) + 1) + sideAMil + sideATroops
+				+ sideABonuses;
+		sideBRoll = (random.nextInt(sideBDie) + 1) + (random.nextInt(sideBDie) + 1) + sideBMil + sideBTroops
+				+ sideBBonuses;
 
 		String out = sideAName + ": " + sideARoll + System.lineSeparator() + sideBName + ": " + sideBRoll
 				+ System.lineSeparator() + System.lineSeparator();
 
 		int result = 0;
-		if (sideARoll > sideBRoll) {
-			difference = sideARoll - sideBRoll;
-			out = out.concat("Side A '" + sideAName + "' wins by " + difference);
-			result = 1;
+		// Overrun check
+		if (2 + sideAMil + sideATroops + sideABonuses > (sideBDie * 2) + sideBMil + sideBTroops + sideBBonuses) {
+			if (sideBTroops <= 3) {
+				out = out.concat("Side A '" + sideAName + "' overruns");
+				result = -1;
+			}
 		}
 
-		else if (sideARoll < sideBRoll) {
-			difference = sideBRoll - sideARoll;
-			out = out.concat("Side B '" + sideBName + "' wins by " + difference);
-			result = 2;
+		if (2 + sideBMil + sideBTroops + sideBBonuses > (sideADie * 2) + sideAMil + sideATroops + sideABonuses) {
+			if (sideATroops <= 3) {
+				out = out.concat("Side B '" + sideBName + "' overruns");
+				result = -2;
+			}
 		}
 
-		else {
-			difference = 0;
-			out = out.concat("Tie");
+		// Normal win/loss
+		if (result >= 0) {
+			if (sideARoll > sideBRoll) {
+				difference = sideARoll - sideBRoll;
+				out = out.concat("Side A '" + sideAName + "' wins by " + difference);
+				result = 1;
+			}
+
+			else if (sideARoll < sideBRoll) {
+				difference = sideBRoll - sideARoll;
+				out = out.concat("Side B '" + sideBName + "' wins by " + difference);
+				result = 2;
+			}
+
+			else {
+				difference = 0;
+				out = out.concat("Tie");
+			}
 		}
 
 		outcome.setText(out);
@@ -238,7 +261,7 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 	/**
 	 * Sets the winner and loser of the battle, then chooses a description using
 	 * resultHelper.
-	 * <p>
+	 * 
 	 * WINNER_TAG represents the winner if not a tie, or side A if tied. LOSER_TAG
 	 * represents the loser if not a tie, or side B if tied.
 	 * 
@@ -276,48 +299,71 @@ public class MilitaryCalculator extends JFrame implements ActionListener {
 	}
 
 	/**
-	 * Calculates size and battle losses based on input.
+	 * Calculates size and battle losses based on input. Winners lose 1d4 * 10%
+	 * troops before size losses, losers lose 1d6 * 10%. In a tie both sides lose
+	 * 2d4 * 10%. On overrun, winners lose 0.5(1d4 * 10%) and losers lose all units.
 	 * 
-	 * @param result		The result generated by generateResult()
-	 * @param random		Random object used for dice
-	 * @return			A String containing the losses and correct format
+	 * @param result
+	 *            The result generated by generateResult()
+	 * @param random
+	 *            Random object used for dice
+	 * @return A String containing the losses and correct format
 	 */
 	private String calculateLosses(int result, Random random) {
-		int sideA_Losses = 0, sideB_Losses = 0, lossLosses = 0;
+		int sideA_Losses = 0, sideB_Losses = 0;
 		String losses = "";
-		
+
 		// Size losses
 		for (int i = 0; i <= Math.floor(sideATroops / 2); i++) { // Side A size losses
-			if (random.nextInt(1) == 0) {
+			if (random.nextInt(2) == 0) {
 				sideA_Losses++;
 			}
 		}
 
 		for (int i = 0; i <= Math.floor(sideBTroops / 2); i++) { // Side B size losses
-			if (random.nextInt(1) == 0) {
+			if (random.nextInt(2) == 0) {
 				sideB_Losses++;
 			}
 		}
 
-		lossLosses = Math.round((difference / 2));
-
-		if (result == 1) { // Side A wins
-			sideB_Losses = sideB_Losses + lossLosses;
-			sideA_Losses = sideA_Losses + Math.round(((random.nextInt(4) + 1) * 0.1f) * lossLosses);
-		} else if (result == 2) { // Side B wins
-			sideA_Losses = sideA_Losses + lossLosses;
-			sideB_Losses = sideB_Losses + Math.round(((random.nextInt(4) + 1) * 0.1f) * lossLosses);
+		// Overrun
+		if (result == -1) { // Side A overrun victory
+			sideB_Losses = sideBTroops;
+			sideA_Losses = sideA_Losses + (int) (0.5 * Math.floor((((random.nextInt(4) + 1) * 0.1f)) * sideATroops) + 1);
 		}
-		
-		if(sideA_Losses >= sideATroops) {
+
+		if (result == -2) { // Side B overrun victory
+			sideA_Losses = sideATroops;
+			sideB_Losses = sideB_Losses + (int) (0.5 * Math.floor((((random.nextInt(4) + 1) * 0.1f)) * sideBTroops) + 1);
+		}
+
+		// Normal
+		if (result == 1) { // Side A wins
+			sideB_Losses = sideB_Losses + (int) Math.floor((((random.nextInt(6) + 1) * 0.1f)) * sideBTroops) + 1;
+			sideA_Losses = sideA_Losses + (int) Math.floor((((random.nextInt(4) + 1) * 0.1f)) * sideATroops) + 1;
+		}
+
+		else if (result == 2) { // Side B wins
+			sideA_Losses = sideA_Losses + (int) Math.floor((((random.nextInt(6) + 1) * 0.1f)) * sideATroops) + 1;
+			sideB_Losses = sideB_Losses + (int) Math.floor((((random.nextInt(4) + 1) * 0.1f)) * sideBTroops) + 1;
+		}
+
+		else if (result == 0) { // Tie
+			sideA_Losses = sideA_Losses
+					+ (int) Math.floor((((random.nextInt(4) + random.nextInt(4) + 2) * 0.1f)) * sideATroops) + 1;
+			sideB_Losses = sideB_Losses
+					+ (int) Math.floor((((random.nextInt(4) + random.nextInt(4) + 2) * 0.1f)) * sideBTroops) + 1;
+		}
+
+		if (sideA_Losses >= sideATroops) {
 			sideA_Losses = sideATroops;
 		}
-		if(sideB_Losses >= sideBTroops) {
+		if (sideB_Losses >= sideBTroops) {
 			sideB_Losses = sideBTroops;
 		}
-				
-		losses = System.lineSeparator() + sideAName + " Losses: " + sideA_Losses + System.lineSeparator()
-		+ sideBName + " Losses: " + sideB_Losses;
+
+		losses = System.lineSeparator() + sideAName + " Losses: " + sideA_Losses + System.lineSeparator() + sideBName
+				+ " Losses: " + sideB_Losses;
 
 		return losses;
 	}
